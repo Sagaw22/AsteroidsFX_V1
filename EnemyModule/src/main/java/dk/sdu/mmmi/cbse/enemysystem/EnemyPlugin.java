@@ -16,6 +16,7 @@ public class EnemyPlugin implements IGamePluginService {
         System.out.println("EnemyPlugin start method called.");
         // Add the enemy ship to the world
         enemy = createEnemyShip(gameData);
+        enemy.setHealth(20);
         world.addEntity(enemy);
         System.out.println("Enemy added to the world: " + enemy);
     }

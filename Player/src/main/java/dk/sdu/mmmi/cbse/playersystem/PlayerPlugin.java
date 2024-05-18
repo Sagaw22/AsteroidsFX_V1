@@ -4,6 +4,7 @@ import dk.sdu.mmmi.cbse.common.data.Entity;
 import dk.sdu.mmmi.cbse.common.data.GameData;
 import dk.sdu.mmmi.cbse.common.data.World;
 import dk.sdu.mmmi.cbse.common.services.IGamePluginService;
+import dk.sdu.mmmi.cbse.playersystem.Player;
 public class PlayerPlugin implements IGamePluginService {
 
     private Entity player;
@@ -16,6 +17,7 @@ public class PlayerPlugin implements IGamePluginService {
 
         // Add entities to the world
         player = createPlayerShip(gameData);
+        player.setHealth(20);
         world.addEntity(player);
     }
 

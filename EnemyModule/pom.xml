@@ -11,7 +11,7 @@
   </parent>
 
   <groupId>dk.sdu.mmmi.cbse.enemysystem</groupId>
-  <artifactId>Enemy</artifactId>
+  <artifactId>EnemyModule</artifactId>
   <version>1.0-SNAPSHOT</version>
   <name>Enemy</name>
 
