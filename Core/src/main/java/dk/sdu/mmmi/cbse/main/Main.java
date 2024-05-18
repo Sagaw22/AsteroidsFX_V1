@@ -21,14 +21,14 @@ import javafx.scene.shape.Polygon;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 public class Main extends Application {
 
@@ -37,7 +37,6 @@ public class Main extends Application {
     private final Map<Entity, Polygon> polygons = new ConcurrentHashMap<>();
     private final Pane gameWindow = new Pane();
     private final List<IPostEntityProcessingService> postEntityProcessingServices = new ArrayList<>();
-    private final List<IEntityProcessingService> entityProcessingServices = new ArrayList<>();
     private Text asteroidText;
     private Text playerHealthText;
     private Text enemyHealthText;
@@ -73,7 +72,10 @@ public class Main extends Application {
         window.setTitle("ASTEROIDS");
         window.show();
 
-        initializeGame();
+        // Initialize Spring context
+        ApplicationContext context = new AnnotationConfigApplicationContext(SpringConfig.class);
+
+        initializeGame(context);
 
         render();
     }
@@ -93,15 +95,15 @@ public class Main extends Application {
         }
     }
 
-    private void initializeGame() {
-        Collection<? extends IGamePluginService> plugins = loadServices(IGamePluginService.class);
+    private void initializeGame(ApplicationContext context) {
+        Collection<? extends IGamePluginService> plugins = context.getBeansOfType(IGamePluginService.class).values();
         for (IGamePluginService plugin : plugins) {
             System.out.println("Starting plugin: " + plugin.getClass().getName());
             plugin.start(gameData, world);
         }
 
-        collisionDetector = new CollisionDetector();
-        collisionDetector.setAsteroidSplitter(new AsteroidSplitterImpl());
+        collisionDetector = context.getBean(CollisionDetector.class);
+        collisionDetector.setAsteroidSplitter(context.getBean(AsteroidSplitterImpl.class));
         postEntityProcessingServices.add(collisionDetector);
 
         for (Entity entity : world.getEntities()) {
@@ -128,7 +130,8 @@ public class Main extends Application {
     }
 
     private void update() {
-        for (IEntityProcessingService service : loadServices(IEntityProcessingService.class)) {
+        ApplicationContext context = new AnnotationConfigApplicationContext(SpringConfig.class);
+        for (IEntityProcessingService service : context.getBeansOfType(IEntityProcessingService.class).values()) {
             service.process(gameData, world);
         }
         for (IPostEntityProcessingService service : postEntityProcessingServices) {
@@ -169,11 +172,5 @@ public class Main extends Application {
                 System.out.println("Removed entity: " + entity);
             }
         }
-    }
-
-    private <T> List<T> loadServices(Class<T> serviceClass) {
-        return ServiceLoader.load(serviceClass).stream()
-                .map(ServiceLoader.Provider::get)
-                .collect(Collectors.toList());
     }
 }
