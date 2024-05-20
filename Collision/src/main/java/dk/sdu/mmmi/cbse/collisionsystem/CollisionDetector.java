@@ -81,7 +81,7 @@ public class CollisionDetector implements IPostEntityProcessingService {
         }
     }
 
-    private boolean collides(Entity entity1, Entity entity2) {
+    boolean collides(Entity entity1, Entity entity2) {
         float dx = (float) entity1.getX() - (float) entity2.getX();
         float dy = (float) entity1.getY() - (float) entity2.getY();
         float distance = (float) Math.sqrt(dx * dx + dy * dy);
