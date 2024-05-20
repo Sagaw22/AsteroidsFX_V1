@@ -24,6 +24,7 @@ import javafx.stage.Stage;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -40,11 +41,15 @@ public class Main extends Application {
     private Text asteroidText;
     private Text playerHealthText;
     private Text enemyHealthText;
+    private Text pointsText;
     private Rectangle playerHealthBar;
     private Rectangle enemyHealthBar;
     private CollisionDetector collisionDetector;
+    private PointsClient pointsClient;
     private Player player;
     private Enemy enemy;
+    private long currentPoints = 0;
+    private int previousEnemyHealth = 0;
 
     public static void main(String[] args) {
         launch(Main.class);
@@ -55,6 +60,7 @@ public class Main extends Application {
         asteroidText = new Text(10, 20, "Destroyed asteroids: 0");
         playerHealthText = new Text(10, 40, "Player Health:");
         enemyHealthText = new Text(10, 80, "Enemy Health:");
+        pointsText = new Text(10, 100, "Points: 0");
 
         playerHealthBar = new Rectangle(150, 40, 100, 10);
         playerHealthBar.setFill(Color.GREEN);
@@ -62,7 +68,7 @@ public class Main extends Application {
         enemyHealthBar.setFill(Color.RED);
 
         gameWindow.setPrefSize(gameData.getDisplayWidth(), gameData.getDisplayHeight());
-        gameWindow.getChildren().addAll(asteroidText, playerHealthText, enemyHealthText, playerHealthBar, enemyHealthBar);
+        gameWindow.getChildren().addAll(asteroidText, playerHealthText, enemyHealthText, pointsText, playerHealthBar, enemyHealthBar);
 
         Scene scene = new Scene(gameWindow);
         scene.setOnKeyPressed(event -> handleKeyPress(event.getCode(), true));
@@ -75,6 +81,7 @@ public class Main extends Application {
         // Initialize Spring context
         ApplicationContext context = new AnnotationConfigApplicationContext(SpringConfig.class);
 
+        pointsClient = context.getBean(PointsClient.class);
         initializeGame(context);
 
         render();
@@ -111,6 +118,7 @@ public class Main extends Application {
                 player = (Player) entity;
             } else if (entity instanceof Enemy) {
                 enemy = (Enemy) entity;
+                previousEnemyHealth = enemy.getHealth();
             }
             Polygon polygon = new Polygon(entity.getPolygonCoordinates());
             polygons.put(entity, polygon);
@@ -138,15 +146,28 @@ public class Main extends Application {
             service.process(gameData, world);
         }
 
-        asteroidText.setText("Destroyed asteroids: " + collisionDetector.getDestroyedAsteroids());
+        if (enemy != null) {
+            int currentEnemyHealth = enemy.getHealth();
+            int healthDifference = previousEnemyHealth - currentEnemyHealth;
+
+            if (healthDifference > 0) {
+                try {
+                    currentPoints = pointsClient.increaseScore((long) healthDifference);
+                } catch (IOException | InterruptedException e) {
+                    e.printStackTrace();
+                }
+                previousEnemyHealth = currentEnemyHealth;
+            }
+
+            enemyHealthText.setText("Enemy Health: " + currentEnemyHealth);
+            enemyHealthBar.setWidth(currentEnemyHealth * 20); // Assuming max health is 20
+        }
+
+        pointsText.setText("Points: " + currentPoints);
 
         if (player != null) {
             playerHealthText.setText("Player Health: " + player.getHealth());
-            playerHealthBar.setWidth(player.getHealth() * 10); // Assuming max health is 10
-        }
-        if (enemy != null) {
-            enemyHealthText.setText("Enemy Health: " + enemy.getHealth());
-            enemyHealthBar.setWidth(enemy.getHealth() * 10); // Assuming max health is 10
+            playerHealthBar.setWidth(player.getHealth() * 20); // Assuming max health is 20
         }
     }
 

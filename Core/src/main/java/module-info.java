@@ -16,6 +16,7 @@ module Core {
     requires Bullet;
     requires CommonAsteroids;
     requires commons.logging;
+    requires java.net.http;
 
     opens dk.sdu.mmmi.cbse.main to javafx.graphics, spring.core, spring.context, spring.beans;
 

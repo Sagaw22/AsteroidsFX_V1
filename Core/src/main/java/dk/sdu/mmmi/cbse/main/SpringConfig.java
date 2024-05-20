@@ -72,4 +72,7 @@ public class SpringConfig {
     public IAsteroidSplitter asteroidSplitter() {
         return new AsteroidSplitterImpl();
     }
+
+    @Bean
+    public PointsClient pointsClient() { return new PointsClient();}
 }
